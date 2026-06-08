@@ -1,42 +1,85 @@
 # lex-sor
 
-Smart order routing for the [Lex language](https://github.com/alpibrusl/lex-lang).
+Smart order routing for Lex. Pure — no effects, no network calls.
 
-Routes a domain `Order` to one or more venues under a typed `RoutingStrategy`. All routing logic is pure — no effects, no network calls. The result is a `RoutingDecision` (list of `Route` records, each a venue + quantity pair) that the caller hands to the exchange transport.
+Routes an `Order` to one or more venues under a typed `RoutingStrategy`. The result is a `RoutingDecision` (list of `Route` records, each a venue + quantity pair) that the caller hands to the exchange transport.
 
-## What it ships
+---
 
-- **`src/strategy.lex`** — `RoutingStrategy` ADT: `BestPrice` / `MinCost` / `Sweep(List[Venue])` / `DirectTo(Venue)`. `strategy_to_str` for logging.
-- **`src/selector.lex`** — `select_venues` validates that the venues implied by a strategy are present in the `available` list before routing commits.
-- **`src/route.lex`** — `Route` and `RoutingDecision` types. `single_route` (one venue, full qty). `sweep_routes` splits qty evenly across a venue list; remainder goes to the first venue.
-- **`src/router.lex`** — `route_order`: top-level entry point. Validates positive qty, runs `select_venues`, then dispatches to `single_route` or `sweep_routes`. Returns `Result[RoutingDecision, Str]`.
+## Strategies
 
-## Usage
+| Strategy | Behaviour |
+|---|---|
+| `BestPrice` | Pick venue with lowest ask (buy) or highest bid (sell). Requires quotes — use `route_order_quoted`. |
+| `MinCost` | Pick venue with lowest all-in cost: ask + fee (buy), or highest bid − fee (sell). Requires quotes. |
+| `Sweep(venues)` | Split quantity evenly across venues; remainder to first venue. |
+| `DirectTo(venue)` | Route full quantity to a single named venue. |
+
+---
+
+## Entry points
+
+### `route_order` — venue-list only
 
 ```lex
 import "lex-sor/src/router"   as router
 import "lex-sor/src/strategy" as strategy
-import "lex-fix/src/venue"    as venue
 
-let available := [Nyse(()), Nasdaq(())]
-let strat     := Sweep([Nyse(()), Nasdaq(())])
-
-match router.route_order(order, strat, available) {
-  Err(msg)      => # routing failed (venue unavailable, qty <= 0)
-  Ok(decision)  => # decision.routes — per-venue allocations
+match router.route_order(order, DirectTo(Nasdaq(())), [Nyse(()), Nasdaq(())]) {
+  Ok(decision) => # decision.routes — per-venue allocations
+  Err(msg)     => # venue unavailable, qty <= 0, etc.
 }
 ```
 
-## Effects
+`BestPrice` and `MinCost` fall back to `first_venue(available)` when using this entry point — no price comparison is performed.
 
-None. All modules are pure.
+### `route_order_quoted` — with live bid/ask/fee (recommended for BestPrice/MinCost)
 
-## Dependencies
+```lex
+import "lex-sor/src/router" as router
 
-- **lex-fix** — `Venue` ADT and `venue_to_str`.
-- **lex-trade** — `Order` domain type.
-- **lex-money** — `Decimal` (via lex-trade; not directly used in routing logic).
+let quotes := [
+  { venue: Nyse(()),    bid: d.decimal(17499, -2), ask: d.decimal(17501, -2), fee: d.decimal(1, -3) },
+  { venue: Nasdaq(()), bid: d.decimal(17498, -2), ask: d.decimal(17500, -2), fee: d.decimal(2, -3) },
+]
+
+match router.route_order_quoted(order, BestPrice(()), quotes) {
+  Ok(decision) => # routes to Nasdaq — lowest ask $175.00 vs NYSE $175.01
+  Err(msg)     => # no quotes, qty <= 0, etc.
+}
+```
+
+For `MinCost` with the same quotes:
+- NYSE: ask + fee = $175.01 + $0.001 = $175.011
+- Nasdaq: ask + fee = $175.00 + $0.002 = $175.002 → Nasdaq wins on total cost
 
 ---
 
-Built under the principles of [Trust Without Comprehension](https://alpibru.com/manifesto).
+## Sweep example
+
+```lex
+router.route_order(order, Sweep([Nyse(()), Nasdaq(())]), [Nyse(()), Nasdaq(())])
+# qty=1000 → NYSE 500, Nasdaq 500
+# qty=1001 → NYSE 501 (remainder to first), Nasdaq 500
+```
+
+---
+
+## In the stack
+
+```
+lex-money · lex-fix · lex-trade
+    ↓
+lex-sor  ←  venue selection and order splitting
+    ↓
+lex-finance · lex-oms
+```
+
+---
+
+## Install
+
+```toml
+[dependencies]
+"lex-sor" = { git = "https://github.com/alpibrusl/lex-sor" }
+```
