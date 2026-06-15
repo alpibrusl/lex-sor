@@ -1,5 +1,9 @@
 # lex-sor
 
+[![CI](https://github.com/alpibrusl/lex-sor/actions/workflows/ci.yml/badge.svg)](https://github.com/alpibrusl/lex-sor/actions/workflows/ci.yml)
+
+**Part of the [Lex](https://lexlang.org) project** — Finance · [Manifesto](https://lexlang.org/manifesto) · [All packages](https://lexlang.org)
+
 Smart order routing for Lex. Pure — no effects, no network calls.
 
 Routes an `Order` to one or more venues under a typed `RoutingStrategy`. The result is a `RoutingDecision` (list of `Route` records, each a venue + quantity pair) that the caller hands to the exchange transport.
