@@ -44,7 +44,6 @@ fn sample_order(qty :: Int) -> order.Order {
 }
 
 # ---- Tests --------------------------------------------------------
-
 fn test_direct_available() -> Result[Unit, Str] {
   let o := sample_order(200)
   let available := [Nyse(()), Nasdaq(())]
@@ -55,7 +54,11 @@ fn test_direct_available() -> Result[Unit, Str] {
         Err(e) => Err(e),
         Ok(_) => {
           let venue_name := list.fold(d.routes, "", fn (acc :: Str, r :: route.Route) -> Str {
-            if str.is_empty(acc) { vn.venue_to_str(r.venue) } else { acc }
+            if str.is_empty(acc) {
+              vn.venue_to_str(r.venue)
+            } else {
+              acc
+            }
           })
           assert_true(venue_name == "NYSE", "direct: venue is NYSE")
         },
@@ -110,7 +113,11 @@ fn test_best_price_routes_to_first() -> Result[Unit, Str] {
         Err(e) => Err(e),
         Ok(_) => {
           let venue_name := list.fold(d.routes, "", fn (acc :: Str, r :: route.Route) -> Str {
-            if str.is_empty(acc) { vn.venue_to_str(r.venue) } else { acc }
+            if str.is_empty(acc) {
+              vn.venue_to_str(r.venue)
+            } else {
+              acc
+            }
           })
           assert_true(venue_name == "NASDAQ", "best_price: routes to first available (Nasdaq)")
         },
@@ -131,3 +138,4 @@ fn run_all() -> Int {
     }
   })
 }
+

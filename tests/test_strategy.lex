@@ -35,7 +35,6 @@ fn assert_eq_int(a :: Int, b :: Int, label :: Str) -> Result[Unit, Str] {
 }
 
 # ---- Tests --------------------------------------------------------
-
 fn test_strategy_to_str_best_price() -> Result[Unit, Str] {
   assert_true(strategy.strategy_to_str(BestPrice(())) == "BestPrice", "BestPrice display")
 }
@@ -82,7 +81,6 @@ fn test_sweep_even() -> Result[Unit, Str] {
 }
 
 fn test_sweep_uneven() -> Result[Unit, Str] {
-  # 100 / 3 = 33 base, remainder 1; first gets 34, others 33
   let d := route.sweep_routes([Nyse(()), Nasdaq(()), Lse(())], 100)
   match assert_eq_int(list.len(d.routes), 3, "sweep_uneven: 3 routes") {
     Err(e) => Err(e),
@@ -115,3 +113,4 @@ fn run_all() -> Int {
     }
   })
 }
+

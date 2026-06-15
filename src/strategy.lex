@@ -36,3 +36,4 @@ fn strategy_to_str(s :: RoutingStrategy) -> Str {
     DirectTo(v) => "DirectTo(" + vn.venue_to_str(v) + ")",
   }
 }
+

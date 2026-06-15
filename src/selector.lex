@@ -62,3 +62,4 @@ fn select_venues(strat :: strategy.RoutingStrategy, available :: List[vn.Venue])
     },
   }
 }
+

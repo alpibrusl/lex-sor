@@ -50,3 +50,4 @@ fn route_summary(d :: RoutingDecision) -> Str {
   let count := list.len(d.routes)
   int.to_str(count) + " routes, total qty " + int.to_str(d.total_qty) + " via " + d.strategy_used
 }
+
