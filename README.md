@@ -87,3 +87,9 @@ lex-finance · lex-oms
 [dependencies]
 "lex-sor" = { git = "https://github.com/alpibrusl/lex-sor" }
 ```
+
+## License
+
+Copyright (c) 2026 lex-sor contributors.
+
+Licensed under the [EUPL-1.2](LICENSE) — the European Union Public Licence, as used across the `lex-*` ecosystem.
